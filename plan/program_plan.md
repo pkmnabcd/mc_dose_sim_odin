@@ -13,6 +13,7 @@ The following is the current plan for the layout of the packages.
 * **Simulation Package:** Run the simulation.
     * This is the most important part, and should be focused on first.
     * *Input:* The structs that detail the initial parameters of the simulation. Also options for the simulation.
-    * *Output:* The results of the sim: the deposited dose put in the material. So, it should be 3D array with the dose as the main value.
+    * *Output:* The results of the sim: the deposited dose put in the material. So, it should be 3D array with the dose as the main value. I think I'll write the data to a file.
 * **View Package:** Present the simulation.
-    * Some design details need to be figured out with this. Maybe the viewer should be separate and should read in data saved from the simulation.
+    * *Input:* The simulation result file location and visualization config/settings.
+    * *Output:* The graphical output: cross sections of the model.
