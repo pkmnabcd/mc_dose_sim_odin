@@ -13,7 +13,6 @@ From parameters, I will determine the volume of the voxels and the mass for dose
 For particles traveling through a medium, there exist attenuation coefficients that are the probability of interaction per unit particle path length.
 Mu is actually the sum of the various attenuation coefficients of the phenomena you're including in your simulation.
 For example, I intend to include the photoelectric effect, Compton scattering, and pair production for photon-matter interactions, so mu = mu_photo + mu_compton + mu_pair.
-For electron-material interactions, I will include inelastic collisions with atomic electrons and inelastic collisions with the nucleus.
 
 The distance a photon/particle goes without an interaction I found to be x = -ln(rand_num) / mu where rand_num is between 0.0 and 1.0.
 At the distance determined, the interaction is determined using the relative probabilites.
@@ -24,6 +23,9 @@ Generate a second random number and do the following.
 * Pair production if (mu_photo + mu_compton) / mu <= rand_num <= 1
 From there, more random numbers may be needed (like determining what angle things are for Compton scattering)
 
+There will be a primary particle and secondary particle queue.
+The incoming beam's particles are in the primary queue.
+Since I'm planning to try to use GPU, I will simulate one photon N times before putting it in the secondary particle queue.
 Once the interaction is determined, the resulting particle(s) are put into the queue.
 Once the photons/particles have gone below some energy threshold, they will be determined to have deposited all their energy into their current voxel.
 
@@ -48,3 +50,5 @@ TODO: finish
 # Notes
 * Great resource is the documentation for [openMC](https://docs.openmc.org/en/stable/methods/index.html).
     * It seems like they mostly put the energy in charged particles in the voxel they're created, so that can be a good shortcut for the start. See section [11. Heating and Energy Deposition](https://docs.openmc.org/en/stable/methods/energy_deposition.html).
+* See [this paper](https://aapm.onlinelibrary.wiley.com/doi/10.1002/mp.17899) for details on how to optimize MC simulation for GPU.
+    * They separate GPU cores into photon and electron cores, and they simulate each particle a certain number of times before putting them in the queue.
