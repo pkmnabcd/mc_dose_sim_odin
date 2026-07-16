@@ -29,3 +29,7 @@ Once the photons/particles have gone below some energy threshold, they will be d
 
 ## Dose Deposition
 Dose is deposited in many, but not all interactions.
+
+# Notes
+* Great resource is the documentation for [openMC](https://docs.openmc.org/en/stable/methods/index.html).
+    * It seems like they mostly put the energy in charged particles in the voxel they're created, so that can be a good shortcut for the start. See section [11. Heating and Energy Deposition](https://docs.openmc.org/en/stable/methods/energy_deposition.html).
