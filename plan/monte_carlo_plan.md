@@ -27,8 +27,23 @@ From there, more random numbers may be needed (like determining what angle thing
 Once the interaction is determined, the resulting particle(s) are put into the queue.
 Once the photons/particles have gone below some energy threshold, they will be determined to have deposited all their energy into their current voxel.
 
-## Dose Deposition
-Dose is deposited in many, but not all interactions.
+## Interaction Handling
+For my first draft, I will simplify the simulation (and the physics) by assigning all the energy from charged particles generated from photon-matter interactions to the voxel where the interaction occurs.
+I feel justified in this because it seems like this largely how openMC handles it.
+See its discussion on [heating and energy deposition](https://docs.openmc.org/en/stable/methods/energy_deposition.html).
+I'm not certain if this is what I should do, but when there is an electron dislodged from an atom, I will assume that both the binding energy and the electron kinetic energy go into dose.
+
+I'll now outline how I'll handle the various interactions.
+
+### Photoelectric Effect
+If the photoelectric effect occurs, all the photon's energy is put into the voxel.
+
+### Compton Scattering
+Here, the incident photon is deflected, so some of its energy will be put into an electron (dose), while the rest stays with the deflected photon.
+TODO: figure out the order and algorithm to decide the energy lost from photon and the angle it goes.
+
+### Pair Production
+TODO: finish
 
 # Notes
 * Great resource is the documentation for [openMC](https://docs.openmc.org/en/stable/methods/index.html).
