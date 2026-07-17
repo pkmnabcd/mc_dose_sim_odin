@@ -43,6 +43,8 @@ If the photoelectric effect occurs, all the photon's energy is put into the voxe
 ### Compton Scattering
 Here, the incident photon is deflected, so some of its energy will be put into an electron (dose), while the rest stays with the deflected photon.
 TODO: figure out the order and algorithm to decide the energy lost from photon and the angle it goes.
+With k = incident photon energy / electron rest mass energy and k' = leaving photon energy / electron rest mass energy, we know that k' = k / (1+k(1-mu)), with mu = cos(deflection angle).
+Note: `alpha` in the `openMC` code refers to `k`.
 
 ### Pair Production
 TODO: finish
