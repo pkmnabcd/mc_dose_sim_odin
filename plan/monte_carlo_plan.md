@@ -44,13 +44,24 @@ If the photoelectric effect occurs, all the photon's energy is put into the voxe
 Here, the incident photon is deflected, so some of its energy will be put into an electron (dose), while the rest stays with the deflected photon.
 TODO: figure out the order and algorithm to decide the energy lost from photon and the angle it goes.
 With k = incident photon energy / electron rest mass energy and k' = leaving photon energy / electron rest mass energy, we know that k' = k / (1+k(1-mu)), with mu = cos(deflection angle).
+First, `mu` will be determined by using the same method as `openMC`, using Kahn's rejection method for k < 3 and Koblinger's method for k >= 3.
 Note: `alpha` in the `openMC` code refers to `k`.
 
+Once `mu` is found, k' is found using the above formula.
+Normally, I would then consider the form factor, but I will be neglecting that for now.
+With this, the energy put into an electron will be added to the dose for the voxel.
+The remaining photon's new angle is computed.
+
+#### Kahn's Rejection Method
+
+#### Koblinger's Direct Method
+
 ### Pair Production
-TODO: finish
+For now, pair production will be treated like the photoelectric effect since I'm simplifying the charged particle model.
 
 # Notes
 * Great resource is the documentation for [openMC](https://docs.openmc.org/en/stable/methods/index.html).
     * It seems like they mostly put the energy in charged particles in the voxel they're created, so that can be a good shortcut for the start. See section [11. Heating and Energy Deposition](https://docs.openmc.org/en/stable/methods/energy_deposition.html).
 * See [this paper](https://aapm.onlinelibrary.wiley.com/doi/10.1002/mp.17899) for details on how to optimize MC simulation for GPU.
     * They separate GPU cores into photon and electron cores, and they simulate each particle a certain number of times before putting them in the queue.
+* Paper illustrating how Koblinger's direct method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811054865).
