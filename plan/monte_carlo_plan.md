@@ -53,8 +53,10 @@ With this, the energy put into an electron will be added to the dose for the vox
 The remaining photon's new angle is computed.
 
 #### Kahn's Rejection Method
+See the below paper and the source code for openMC: `klein_nishina` in `photon.cpp` for how this can be done.
 
 #### Koblinger's Direct Method
+See the below paper and the source code for openMC: `klein_nishina` in `photon.cpp` for how this can be done.
 
 ### Pair Production
 For now, pair production will be treated like the photoelectric effect since I'm simplifying the charged particle model.
@@ -65,3 +67,4 @@ For now, pair production will be treated like the photoelectric effect since I'm
 * See [this paper](https://aapm.onlinelibrary.wiley.com/doi/10.1002/mp.17899) for details on how to optimize MC simulation for GPU.
     * They separate GPU cores into photon and electron cores, and they simulate each particle a certain number of times before putting them in the queue.
 * Paper illustrating how Koblinger's direct method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811054865).
+* Paper illustrating how Khan's rejection method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811021552).
