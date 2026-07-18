@@ -68,3 +68,4 @@ For now, pair production will be treated like the photoelectric effect since I'm
     * They separate GPU cores into photon and electron cores, and they simulate each particle a certain number of times before putting them in the queue.
 * Paper illustrating how Koblinger's direct method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811054865).
 * Paper illustrating how Khan's rejection method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811021552).
+* Most important code for openMC [here](https://github.com/openmc-dev/openmc/blob/db673b9acb400d15be3df98ea0492486ff820866/src/photon.cpp).
