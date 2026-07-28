@@ -72,3 +72,8 @@ $$P=(M)^{-1}P$$
 During the simulation, I will be tracking the angle of photons and how far they go until the next interaction.
 This implies that I will have to place the next interaction at a voxel, which has discrete points, unlike the continuous world coordinates.
 So, I will have to find a way to decide which voxel to put whatever energy into.
+
+I think that this should be pretty simple because the coordinate system's points should match with the indexes when you multiply by some scaling factor.
+Say a coordinate in material space is (50.13 mm, 20.10 mm, 40.99 mm) and the unit length is 2 mm.
+If you divide each coordinate by 2 mm and round to the nearest (nonnegative) integer, then those will be the indexes of the correct voxel.
+(50.13 mm, 20.10 mm, 40.99 mm) -> (25.065, 10.05, 20.495) -> (25, 10, 20)
