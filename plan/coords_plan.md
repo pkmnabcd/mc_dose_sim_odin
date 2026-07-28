@@ -30,6 +30,7 @@ I think that I'll try to keep the basis vectors the same except different scalin
 Say that the material unit length is $a$ times world unit length.
 This implies that for a coordinate in material coordinates $P$, the associated coordinate in world coordinates $P'$ is the following.
 Note that we use the 4-coordinate version of $P$ to simplify translation.
+
 $$
 P'=
 \begin{bmatrix}
@@ -42,6 +43,7 @@ P
 $$
 
 If the transformation also requires a translation and rotation, then we get the following transformation.
+
 $$
 P'=
 \begin{bmatrix}
@@ -59,9 +61,11 @@ a & 0 & 0 & 0 \\\
 \end{bmatrix}
 P
 $$
+
 where $b_q$ indicates a translation in each direction and $R$ is the matrix of rotation (there are different ones for rotation about each axis).
 
 If I were to transform a coordinate the other way, I would just need to compute the inverse matrix $(M)^{-1}$, and that matrix would be used to go back.
+
 $$P=(M)^{-1}P$$
 
 # Finding the Closest Coordinate
