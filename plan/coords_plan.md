@@ -27,9 +27,9 @@ This means that each coordinate transformation should involve two coordinate sys
 
 Say that we're going from material coordinates to world coordinates.
 I think that I'll try to keep the basis vectors the same except different scaling.
-Say that the material unit length is `a` times world unit length.
-This implies that for a coordinate in material coordinates `P`, the associated coordinate in world coordinates `P'` is the following.
-Note that we use the 4-coordinate version of `P` to simplify translation.
+Say that the material unit length is $a$ times world unit length.
+This implies that for a coordinate in material coordinates $P$, the associated coordinate in world coordinates $P'$ is the following.
+Note that we use the 4-coordinate version of $P$ to simplify translation.
 $$
 P'=
 \begin{bmatrix}
@@ -59,7 +59,7 @@ a & 0 & 0 & 0 \\\
 \end{bmatrix}
 P
 $$
-where `b_q` indicates a translation in each direction and `R` is the matrix of rotation (there are different ones for rotation about each axis).
+where $b_q$ indicates a translation in each direction and $R$ is the matrix of rotation (there are different ones for rotation about each axis).
 
 If I were to transform a coordinate the other way, I would just need to compute the inverse matrix $(M)^{-1}$, and that matrix would be used to go back.
 $$P=(M)^{-1}P$$
