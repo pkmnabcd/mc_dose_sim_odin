@@ -1,33 +1,31 @@
 package sim
 
+import "core:fmt"
+import "core:math/linalg"
+
+import "../util"
+
 SetupData :: struct {
     // General Setup
-    voxel_len: f32,              // length of the sides of the cube that make a voxel in m
-    photon_sim_count: u64,       // the number of photons to simulate
-    material_origin_pos: [3]f32, // the position in world space that represents indexes (0,0,0) of the voxel array
+    voxel_len: f32,                           // length of the sides of the cube that make a voxel in m
+    photon_sim_count: u64,                    // the number of photons to simulate
+    material_to_world_coords: matrix[4,4]f32, // the matrix to transform material coords to world coords
 
     // Material stuff
-    material_density: f32,       // density of the irradiated material in kg/m^3
+    material_density: f32,    // density of the irradiated material in kg/m^3
+    voxel_count_per_dim: u32, // the number of voxels in each dimension of the array
 
     // Beam stuff
-    cone_beam_length: f32,       // length of one side of cone beam surface
-    cone_beam_width: f32,        // length of other side of cone beam surface
-    cone_beam_coords: [4][3]f32, // the four positions that make up the cone beam surface
-    cone_beam_center: [3]f32,    // position in world space of the center of cone beam surface
-    isocenter_pos: [3]f32,       // position in world space of isocenter
-    source_pos:    [3]f32,       // position in world space of cone beam source
-    photon_energy: f32,          // energy of monoenergetic photons in MeV
+    isocenter_pos: [3]f32, // position in world space of isocenter
+    source_pos:    [3]f32, // position in world space of cone beam source
+    photon_energy: f32,    // energy of monoenergetic photons in MeV
+
+    // Cone beam specific
+    cb_length: f32,                     // length of one side of cone beam surface in m
+    cb_width: f32,                      // length of other side of cone beam surface in m
+    cb_center: [3]f32,                  // position in world space of the center of cone beam surface
+    cb_coords_to_world: matrix[4,4]f32, // the matrix needed to transform the field surface coords to world coords
 }
-// TODO: add a document explaining (especially to myself) the coordinate systems.
-// How the world coordates exist (probably with units meters), and the origin of the material model
-// is placed at some coordinate that is the origin (material_origin_pos), which is the coordinate
-// at which the material model's index (0,0,0) represents. I need to decide if I want that to be the
-// corner of the model or the middle.
-// I should also be ready to do some coordinate transformations to make things easier. For example,
-// it's almost certainly easier to sample the rectangular cone beam field from a coord system where
-// the coords align with the rectangle edges, then transform those coords back to world coords.
-// TODO: I also need a matrix to possibly transform the coordinate system of the material model
-// to world coords.
 
 /*
 Gather the simulation parameters and precompute some useful things.
@@ -37,4 +35,47 @@ Returns:
 - SetupData struct containing the simulation parameters
 */
 setupSim :: proc() -> SetupData {
+    data: SetupData = SetupData{}
+    data.voxel_len = 1e-3
+    data.photon_sim_count = 10_000_000
+
+    data.material_density = 998. // water
+    data.voxel_count_per_dim = 1300 // voxels should take about 9 gb of memory (1300^3 * 4 byte float)
+
+    data.isocenter_pos = [3]f32{0.5, 0.5, 0.5}
+    data.source_pos = [3]f32{-1., 0.5, 0.5}
+    data.photon_energy = 1. // MeV
+
+    data.cb_length = 0.2
+    data.cb_width = 0.3
+
+    // Determine field center
+    field_normal: [3]f32 = [3]f32{1,0,0}// hitting the yz plane
+    plane_pt: [3]f32 = [3]f32{-1*data.voxel_len/2, 0, 0} // account for the depth of the voxel center
+    line_vec: [3]f32 = linalg.normalize(data.isocenter_pos - data.source_pos)
+    data.cb_center = util.plane_line_intersect_point(plane_pt, data.source_pos, line_vec, field_normal)
+
+    // For now, material has same coordinate system as world except on mm scale instead of m.
+    data.material_to_world_coords = matrix[4,4]f32{
+        data.voxel_len, 0, 0, 0,
+        0, data.voxel_len, 0, 0,
+        0, 0, data.voxel_len, 0,
+        0, 0, 0, 1,
+    }
+
+    // For now, this will have same coordinate system as world except displaced with beam center at 0,0
+    data.cb_coords_to_world = matrix[4,4]f32{
+        1, 0, 0, data.cb_center.x,
+        0, 1, 0, data.cb_center.y,
+        0, 0, 1, data.cb_center.z,
+        0, 0, 0, 1,
+    }
+
+    return data
+}
+
+// TMP
+main :: proc() {
+    input: SetupData = setupSim()
+    fmt.println("Beam Center: ", input.cb_center)
 }
