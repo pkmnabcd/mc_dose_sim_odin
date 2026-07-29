@@ -78,4 +78,10 @@ setupSim :: proc() -> SetupData {
 main :: proc() {
     input: SetupData = setupSim()
     fmt.println("Beam Center: ", input.cb_center)
+    fmt.printfln("y range: [%v,%v]", input.cb_center.y - input.cb_length/2, input.cb_center.y + input.cb_length/2)
+    fmt.printfln("z range: [%v,%v]", input.cb_center.z - input.cb_width/2, input.cb_center.z + input.cb_width/2)
+
+    for i in 0..<200 {
+        fmt.printfln("Sample %v: %v", i, sampleConeField(input.cb_length, input.cb_width, input.cb_coords_to_world))
+    }
 }
