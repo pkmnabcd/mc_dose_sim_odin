@@ -5,6 +5,15 @@ import "core:os"
 import "core:strconv"
 import "core:strings"
 
+/*
+Reads the given xcom database file into an array of data.
+
+Input:
+- filepath: the path to the file from pwd. This file should start with the data (no headers), and it should have 8 columns.
+
+Returns:
+- A dynamic array of [5]f32 of the read data. Each array has the order: [photon energy, incoherent scattering, photoelectric, pp nuclear, pp electron]
+*/
 parse_xcom_data :: proc(filepath: string) -> (out: [dynamic][5]f32, incomplete: bool) {
     data, err := os.read_entire_file_from_path(filepath, context.allocator)
     defer delete(data, context.allocator)

@@ -90,4 +90,7 @@ main :: proc() {
     xcom_data, incomplete := util.parse_xcom_data("data/water_xcom.txt")
     if incomplete do fmt.println("Incomplete")
     else do fmt.println(xcom_data)
+
+    test_energy: f32 = 0.0168 // MeV
+    fmt.printfln("From %v MeV we get the following: %v", test_energy, util.interpolate_xcom(xcom_data, test_energy))
 }
