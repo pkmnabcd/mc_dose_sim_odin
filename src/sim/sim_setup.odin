@@ -19,6 +19,7 @@ SetupData :: struct {
     isocenter_pos: [3]f32, // position in world space of isocenter
     source_pos:    [3]f32, // position in world space of cone beam source
     photon_energy: f32,    // energy of monoenergetic photons in MeV
+    photon_cutoff: f32,    // the energy at which photons stop getting simulated
 
     // Cone beam specific
     cb_length: f32,                     // length of one side of cone beam surface in m
@@ -45,6 +46,7 @@ setupSim :: proc() -> SetupData {
     data.isocenter_pos = [3]f32{0.5, 0.5, 0.5}
     data.source_pos = [3]f32{-1., 0.5, 0.5}
     data.photon_energy = 1. // MeV
+    data.photon_cutoff = 0.001
 
     data.cb_length = 0.2
     data.cb_width = 0.3
@@ -84,4 +86,8 @@ main :: proc() {
     for i in 0..<200 {
         fmt.printfln("Sample %v: %v", i, sampleConeField(input.cb_length, input.cb_width, input.cb_coords_to_world))
     }
+
+    xcom_data, incomplete := util.parse_xcom_data("data/water_xcom.txt")
+    if incomplete do fmt.println("Incomplete")
+    else do fmt.println(xcom_data)
 }
