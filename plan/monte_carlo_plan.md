@@ -53,6 +53,9 @@ With this, the energy put into an electron will be added to the dose for the vox
 The remaining photon's new angle is computed.
 This can be done in a manner similar to `openMC` (see notes).
 
+The application of the angles to change the direction vector can be done similar to `openMC`.
+See the notes. I haven't been able to find an explanation or a source for the algorithm, but I'm just going to trust it.
+
 #### Kahn's Rejection Method
 See the below paper and the source code for openMC: `klein_nishina` in `photon.cpp` for how this can be done.
 
@@ -71,3 +74,4 @@ For now, pair production will be treated like the photoelectric effect since I'm
 * Paper illustrating how Khan's rejection method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811021552).
 * Most important code for openMC [here](https://github.com/openmc-dev/openmc/blob/db673b9acb400d15be3df98ea0492486ff820866/src/photon.cpp).
 * See `rotate_angle` function for how to rotate the vector for compton scattering [here](https://github.com/openmc-dev/openmc/blob/ed5b7a2990199a89489041c9824bf6e7e6055217/src/math_functions.cpp#L772). Recall that `mu = cos(theta)`.
+* See this description for rotating a particle's coordinates for when compton scattering [here](https://docs.openmc.org/en/stable/methods/neutron_physics.html#transforming-a-particle-s-coordinates)
