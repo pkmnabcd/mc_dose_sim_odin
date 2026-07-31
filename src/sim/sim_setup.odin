@@ -1,6 +1,5 @@
 package sim
 
-import "core:fmt"
 import "core:math/linalg"
 
 import "../util"
@@ -12,8 +11,9 @@ SetupData :: struct {
     material_to_world_coords: matrix[4,4]f32, // the matrix to transform material coords to world coords
 
     // Material stuff
-    material_density: f32,    // density of the irradiated material in kg/m^3
-    voxel_count_per_dim: u32, // the number of voxels in each dimension of the array
+    material_density: f32,      // density of the irradiated material in kg/m^3
+    voxel_count_per_dim: u32,   // the number of voxels in each dimension of the array
+    xcom_data: [dynamic][5]f32, // the mass cross section data for your material
 
     // Beam stuff
     isocenter_pos: [3]f32, // position in world space of isocenter
@@ -33,10 +33,10 @@ Gather the simulation parameters and precompute some useful things.
 For now these values are hardcoded, but they will later be obtained from data and config files.
 
 Returns:
-- SetupData struct containing the simulation parameters
+- data: struct containing the simulation parameters
+- success: flag saying whether everything succeeded
 */
-setupSim :: proc() -> SetupData {
-    data: SetupData = SetupData{}
+setupSim :: proc() -> (data: SetupData, success: bool) {
     data.voxel_len = 1e-3
     data.photon_sim_count = 10_000_000
 
@@ -73,24 +73,8 @@ setupSim :: proc() -> SetupData {
         0, 0, 0, 1,
     }
 
-    return data
-}
-
-// TMP
-main :: proc() {
-    input: SetupData = setupSim()
-    fmt.println("Beam Center: ", input.cb_center)
-    fmt.printfln("y range: [%v,%v]", input.cb_center.y - input.cb_length/2, input.cb_center.y + input.cb_length/2)
-    fmt.printfln("z range: [%v,%v]", input.cb_center.z - input.cb_width/2, input.cb_center.z + input.cb_width/2)
-
-    for i in 0..<200 {
-        fmt.printfln("Sample %v: %v", i, sampleConeField(input.cb_length, input.cb_width, input.cb_coords_to_world))
-    }
-
-    xcom_data, incomplete := util.parse_xcom_data("data/water_xcom.txt")
-    if incomplete do fmt.println("Incomplete")
-    else do fmt.println(xcom_data)
-
-    test_energy: f32 = 0.0168 // MeV
-    fmt.printfln("From %v MeV we get the following: %v", test_energy, util.interpolate_xcom(xcom_data, test_energy))
+    read_incomplete: bool
+    data.xcom_data, read_incomplete = util.parse_xcom_data("data/water_xcom.txt")
+    success = !read_incomplete
+    return
 }

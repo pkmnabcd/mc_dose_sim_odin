@@ -51,6 +51,7 @@ Once `mu` is found, k' is found using the above formula.
 Normally, I would then consider the form factor, but I will be neglecting that for now.
 With this, the energy put into an electron will be added to the dose for the voxel.
 The remaining photon's new angle is computed.
+This can be done in a manner similar to `openMC` (see notes).
 
 #### Kahn's Rejection Method
 See the below paper and the source code for openMC: `klein_nishina` in `photon.cpp` for how this can be done.
@@ -69,3 +70,4 @@ For now, pair production will be treated like the photoelectric effect since I'm
 * Paper illustrating how Koblinger's direct method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811054865).
 * Paper illustrating how Khan's rejection method can be implemented. [Here](https://www.sciencedirect.com/science/article/pii/S1877705811021552).
 * Most important code for openMC [here](https://github.com/openmc-dev/openmc/blob/db673b9acb400d15be3df98ea0492486ff820866/src/photon.cpp).
+* See `rotate_angle` function for how to rotate the vector for compton scattering [here](https://github.com/openmc-dev/openmc/blob/ed5b7a2990199a89489041c9824bf6e7e6055217/src/math_functions.cpp#L772). Recall that `mu = cos(theta)`.
