@@ -1,6 +1,7 @@
 package sim
 
 import "core:fmt"
+import "core:container/queue"
 
 Photon :: struct {
     energy: f32,       // Current photon energy in MeV.
@@ -18,4 +19,8 @@ main :: proc() {
 
     voxels: Grid = make_grid(int(setup.voxel_count_per_dim))
     defer destroy_grid(&voxels)
+
+    photon_q: queue.Queue(Photon)
+    queue.init(&photon_q, 400)
+    defer queue.destroy(&photon_q)
 }
