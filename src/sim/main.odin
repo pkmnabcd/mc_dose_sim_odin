@@ -6,6 +6,8 @@ import "core:container/queue"
 import "core:fmt"
 import "core:math"
 import "core:math/linalg"
+import "core:sync"
+import "core:thread"
 
 Photon :: struct {
     energy: f32,       // Current photon energy in MeV.
@@ -13,20 +15,58 @@ Photon :: struct {
     direction: [3]f32, // Direction vector in world coords. Should be normalized.
 }
 
-sample_fill_queue :: proc(q: ^queue.Queue(Photon), setup: ^SetupData) {
+/*
+Randomly sample photons entering the surface from a cone beam and push those
+initial photons to the photon queue until the queue is full or count is reached
+
+Inputs:
+- q: the photon queue to have photons added to
+- count: the maximum number to enqueue
+- setup: setup data to reference in the process
+*/
+sample_fill_queue :: proc(q: ^queue.Queue(Photon), count: u64, setup: ^SetupData) {
+    count := count
     if queue.space(q^) == 0 do return
 
     length, width, trans_mat := setup.cb_length, setup.cb_width, setup.cb_coords_to_world
     source_pos := setup.source_pos
     photon_energy := setup.photon_energy
 
-    // Fill with photons until full
-    for ; queue.space(q^) != 0 ; {
-        // Sample photon
+    // Fill with photons until full or reach count
+    for ; count > 0 || queue.space(q^) != 0 ; count -= 1 {
+        // Sample photon and enqueue
         position := sampleConeField(length, width, trans_mat)
         direction := linalg.normalize(position - source_pos)
         photon := Photon{photon_energy, position, direction}
         queue.enqueue(q, photon)
+    }
+}
+
+/*
+The execution done by the thread that periodicly and atomically fills the photon queue
+
+Inputs:
+- q: the photon queue that it fills
+- q_mut: the queue mutex
+- setup: the config data that needs to be referenced
+*/
+run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, setup: ^SetupData) {
+    photon_sim_count: u64 = setup.photon_sim_count
+    fill_level: int = setup.photon_queue_capacity / 2
+    capacity: int = setup.photon_queue_capacity
+    photon_enqueue_count: u64 = u64(setup.photon_queue_capacity)
+
+    // Fill the photon queue once it half full until photon_sim_count reached
+    for ; photon_enqueue_count <= photon_sim_count ; { // enqueue stops after this reaches setup.photon_sim_count
+        if queue.space(q^) > fill_level {
+            sync.lock(q_mut)
+            to_add: u64 = photon_sim_count - photon_enqueue_count
+            sample_fill_queue(q, to_add, setup)
+            photon_enqueue_count += to_add
+            sync.unlock(q_mut)
+        } else {
+            thread.yield()
+        }
     }
 }
 
@@ -41,21 +81,20 @@ main :: proc() {
     voxels: Grid = make_grid(int(setup.voxel_count_per_dim))
     defer destroy_grid(&voxels)
 
+    // Set up photon queue, queue mutex, and photon count
     photon_q: queue.Queue(Photon)
-    queue.init(&photon_q, 400)
+    queue.init(&photon_q, setup.photon_queue_capacity)
     defer queue.destroy(&photon_q)
-    sample_fill_queue(&photon_q, &setup)
+    sample_fill_queue(&photon_q, u64(setup.photon_queue_capacity), &setup)
+    q_mut: sync.Mutex
+    sync.lock(&q_mut)
+    sync.unlock(&q_mut)
 
-    old_vec := [3]f32{1,0,0}
-    new_vec := util.rotate_direction(old_vec, math.PI/2, 0)
-    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
-    old_vec = [3]f32{1,0,0}
-    new_vec = util.rotate_direction(old_vec, math.PI/2, math.PI)
-    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
-    old_vec = [3]f32{1,0,0}
-    new_vec = util.rotate_direction(old_vec, math.PI/2, math.PI/2)
-    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
-    old_vec = [3]f32{1,0,0}
-    new_vec = util.rotate_direction(old_vec, math.PI/2, 3*math.PI/2)
-    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
+    // TMP Initialize threads
+    MAX_THREADS :: 8
+    threads: [MAX_THREADS]^thread.Thread
+    threads[0] = thread.create_and_start_with_poly_data3(&photon_q, &q_mut, &setup, run_queue_fill_thread)
+    for t in threads {
+        thread.destroy(t)
+    }
 }

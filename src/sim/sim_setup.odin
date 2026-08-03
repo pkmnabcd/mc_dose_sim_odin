@@ -9,6 +9,7 @@ SetupData :: struct {
     voxel_len: f32,                           // length of the sides of the cube that make a voxel in m
     photon_sim_count: u64,                    // the number of photons to simulate
     material_to_world_coords: matrix[4,4]f32, // the matrix to transform material coords to world coords
+    photon_queue_capacity: int,               // the maximum capacity of the photon queue
 
     // Material stuff
     material_density: f32,      // density of the irradiated material in kg/m^3
@@ -39,6 +40,7 @@ Returns:
 setupSim :: proc() -> (data: SetupData, success: bool) {
     data.voxel_len = 1e-3
     data.photon_sim_count = 10_000_000
+    data.photon_queue_capacity = 1000
 
     data.material_density = 998. // water
     data.voxel_count_per_dim = 1300 // voxels should take about 9 gb of memory (1300^3 * 4 byte float)
