@@ -1,6 +1,8 @@
 package util
 
+import "core:math"
 import "core:math/linalg"
+import "core:fmt"
 
 interpolatef32 :: proc(x1, x2, y1, y2, x: f32) -> (y: f32) {
     y = (y2-y1) / (x2-x1) * (x-x1) + y1
@@ -53,4 +55,50 @@ Returns:
 plane_line_intersect_point :: proc(p_0, l_0, l, n: [3]f32) -> (p: [3]f32) {
     line_scalar: f32 = linalg.dot(p_0-l_0, n) / linalg.dot(l, n)
     return l_0 + (line_scalar * l)
+}
+
+/*
+Rotate the incoming direction vector by the scattering (polar) angle theta
+and the azimuthal angle phi to get the new direction in world coords.
+
+Inputs:
+- v0: the initial direction vector in world coords
+- theta: the scattering/polar angle in radians
+- phi: the azimuthal angle in radians
+
+Returns:
+- v1: the rotated direction vector in world coords
+*/
+rotate_direction :: proc(v0: [3]f32, theta, phi: f32) -> (v1: [3]f32) {
+    sin_theta: f32 = math.sin(theta)
+    sin_phi: f32 = math.sin(phi)
+    cos_theta: f32 = math.cos(theta)
+    cos_phi: f32 = math.cos(phi)
+
+    // NOTE: local coordinate system has the v0 direction be in the direction of
+    // the z-axis. Scattering in this frame is simply applying spherical coords.
+    v_local := [3]f32{sin_theta*cos_phi, sin_theta*sin_phi, cos_theta}
+
+    // To assemble the matrix needed for change of basis, we need to come up with
+    // two vectors perpendicular to v0 in world coords. We'll use {1,0,0} unless
+    // cross({1,0,0}, v0) is close to 0, in which case we'll use {0,1,0} to get
+    // the first perpendicular vector.
+    ref_vector := [3]f32{1,0,0}
+    cross1 := linalg.cross(ref_vector, v0)
+    if linalg.length(cross1) < 1e-8 {
+        ref_vector = [3]f32{0,1,0}
+        cross1 = linalg.cross(ref_vector, v0)
+    }
+    cross1 = linalg.normalize(cross1)
+    cross2 := linalg.normalize(linalg.cross(v0, cross1))
+
+    // The columns of the change of basis matrix are the three vectors that make
+    // up the vector's local coordinate system in world coordinates.
+    change_of_basis := matrix[3,3]f32{
+        cross1.x, cross2.x, v0.x,
+        cross1.y, cross2.y, v0.y,
+        cross1.z, cross2.z, v0.z,
+    }
+    v1 = linalg.normalize(change_of_basis * v_local)
+    return
 }

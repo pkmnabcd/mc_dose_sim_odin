@@ -1,7 +1,10 @@
 package sim
 
+import "../util"
+
 import "core:container/queue"
 import "core:fmt"
+import "core:math"
 import "core:math/linalg"
 
 Photon :: struct {
@@ -42,4 +45,17 @@ main :: proc() {
     queue.init(&photon_q, 400)
     defer queue.destroy(&photon_q)
     sample_fill_queue(&photon_q, &setup)
+
+    old_vec := [3]f32{1,0,0}
+    new_vec := util.rotate_direction(old_vec, math.PI/2, 0)
+    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
+    old_vec = [3]f32{1,0,0}
+    new_vec = util.rotate_direction(old_vec, math.PI/2, math.PI)
+    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
+    old_vec = [3]f32{1,0,0}
+    new_vec = util.rotate_direction(old_vec, math.PI/2, math.PI/2)
+    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
+    old_vec = [3]f32{1,0,0}
+    new_vec = util.rotate_direction(old_vec, math.PI/2, 3*math.PI/2)
+    fmt.println("Old vec: ", old_vec, "\nNew vec: ", new_vec)
 }
