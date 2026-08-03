@@ -81,6 +81,8 @@ These form the following matrix $M$ that can retrieve the world coordinates of t
 
 $$v_\text{world}=Mv_\text{local}$$
 
+where
+
 $$M=
 \begin{bmatrix}
 v_1 & v_2 & v_3 \\\
