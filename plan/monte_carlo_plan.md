@@ -62,11 +62,12 @@ See the below paper and the source code for openMC: `klein_nishina` in `photon.c
 See the below paper and the source code for openMC: `klein_nishina` in `photon.cpp` for how this can be done.
 
 #### Applying the Angle to Photon Direction
-Once we have the deflection angle $theta$ and have randomly sampled the azimuthal angle, the direction of the photon is changed by assuming that the initial photon direction is the polar angle and use spherical-to-cartesian coordinates to put the new vector in that coordinate system.
+Once we have the deflection angle $\theta$ and have randomly sampled the azimuthal angle $\phi$, the direction of the photon is changed by assuming that the initial photon direction is the polar angle and use spherical-to-cartesian coordinates to put the new vector in that coordinate system.
 Then, we can use the photon direction in world coords as a basis and come up with two more basis vectors to create an orhtogonal basis.
 With this, we can do a change of basis by putting those three basis vectors in a matrix as column vectors and multiply it by the new local coords vector to get the new direction in world coordinates.
 
 Define $v_\text{local}$ as the deflected direction in the local coordinate system (where the incident direction is in the polar $\hat{z}$ direction). Then,
+
 $$v_\text{local}=
 \begin{bmatrix}
 \sin(\theta)\cos(\phi)\\\
@@ -77,7 +78,9 @@ $$
 
 Say that in world coordinates, we have the incident direction $v_1$ and two other vectors $v_2$ and $v_3$ that form an orthonormal basis, and that they are described in world coordinates.
 These form the following matrix $M$ that can retrieve the world coordinates of the new direction by the following (change of basis).
+
 $$v_\text{world}=Mv_\text{local}$$
+
 $$M=
 \begin{bmatrix}
 v_1 & v_2 & v_3 \\\
