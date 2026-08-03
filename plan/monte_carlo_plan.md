@@ -88,6 +88,7 @@ $$M=
 v_1 & v_2 & v_3 \\\
 \end{bmatrix}
 $$
+
 The basis vectors are used as column vectors.
 
 ### Pair Production
