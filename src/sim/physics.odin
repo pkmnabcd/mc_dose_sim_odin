@@ -17,25 +17,14 @@ material.
 Inputs:
 - photon: the Photon struct with the needed incident photon info
 - grid: the grid of energy deposition where the photon's energy is put into
-- setup: the SetupData that has vital parameters
+- x: the rounded x-coordinate in material coords of the photon
+- y: the rounded y-coordinate in material coords of the photon
+- z: the rounded z-coordinate in material coords of the photon
 */
-handle_photoelectric :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
-    voxel_count_per_dim := setup.voxel_count_per_dim
-
-    // Need to convert to grid coordinates to find the best grid position
-    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
-    photon_pos_grid := setup.material_to_world_coords * photon_pos
-    photon_pos_grid_round := [3]int{}
-    for i in 0..<3 {
-        pos := int(photon_pos_grid[i])
-        if pos >= int(voxel_count_per_dim) do return // skip photons that have escaped the bounds of the simulation
-
-        photon_pos_grid_round[i] = pos
-    }
-    grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, photon.energy)
+handle_photoelectric :: proc(photon: ^Photon, x, y, z: int, grid: ^Grid) {
+    grid_add(grid, x, y, z, photon.energy)
     return
 }
-// TODO: move position checking code to the function that calls this
 
 /*
 Do the physics and energy deposition associated with pair production.
@@ -47,25 +36,14 @@ of the material.
 Inputs:
 - photon: the Photon struct with the needed incident photon info
 - grid: the grid of energy deposition where the photon's energy is put into
-- setup: the SetupData that has vital parameters
+- x: the rounded x-coordinate in material coords of the photon
+- y: the rounded y-coordinate in material coords of the photon
+- z: the rounded z-coordinate in material coords of the photon
 */
-handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
-    voxel_count_per_dim := setup.voxel_count_per_dim
-
-    // Need to convert to grid coordinates to find the best grid position
-    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
-    photon_pos_grid := setup.material_to_world_coords * photon_pos
-    photon_pos_grid_round := [3]int{}
-    for i in 0..<3 {
-        pos := int(photon_pos_grid[i])
-        if pos >= int(voxel_count_per_dim) do return // skip photons that have escaped the bounds of the simulation
-
-        photon_pos_grid_round[i] = pos
-    }
-    grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, photon.energy)
+handle_pair_production :: proc(photon: ^Photon, x, y, z: int, grid: ^Grid) {
+    grid_add(grid, x, y, z, photon.energy)
     return
 }
-// TODO: move position checking code to the function that calls this
 
 sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
     // If k < 3, use Kahn's Rejection Method, else use Koblinger's Direct Method.
@@ -113,9 +91,16 @@ sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
 }
 
 /*
-Do the physics for Compton scattering
+Do the physics and energy deposition associated with Compton scattering.
+
+Inputs:
+- photon: the Photon struct with the needed incident photon info
+- grid: the grid of energy deposition where the photon's energy is put into
+- x: the rounded x-coordinate in material coords of the photon
+- y: the rounded y-coordinate in material coords of the photon
+- z: the rounded z-coordinate in material coords of the photon
 */
-handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) -> (new_photon: Photon) {
+handle_compton_scatter :: proc(photon: ^Photon, x, y, z: int, grid: ^Grid) -> (new_photon: Photon) {
     // NOTE: this code is pretty much just what openMC does, cross-referenced with
     // the following papers.
     // https://www.sciencedirect.com/science/article/pii/S1877705811054865
@@ -129,21 +114,7 @@ handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     new_photon.energy = new_energy
     new_photon.position = photon.position
     new_photon.direction = util.rotate_direction(photon.direction, theta, phi)
-
-    // TODO: move position checking code to the function that calls this
-    // so I don't have to do all the above work
-    // Adding deposited energy to voxel
-    // Need to convert to grid coordinates to find the best grid position
-    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
-    photon_pos_grid := setup.material_to_world_coords * photon_pos
-    photon_pos_grid_round := [3]int{}
-    for i in 0..<3 {
-        pos := int(photon_pos_grid[i])
-        if pos >= int(setup.voxel_count_per_dim) do return // skip photons that have escaped the bounds of the simulation
-
-        photon_pos_grid_round[i] = pos
-    }
-    grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, deposited)
+    grid_add(grid, x, y, z, deposited)
     return
 }
 // TODO: move position checking code to the function that calls this

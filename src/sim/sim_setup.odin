@@ -9,6 +9,7 @@ SetupData :: struct {
     voxel_len: f64,                           // length of the sides of the cube that make a voxel in m
     photon_sim_count: u64,                    // the number of photons to simulate
     material_to_world_coords: matrix[4,4]f64, // the matrix to transform material coords to world coords
+    world_to_material_coords: matrix[4,4]f64, // the matrix to transform world coords to material coords
     photon_queue_capacity: int,               // the maximum capacity of the photon queue
     scale_factor: f64,                        // the fixed-point scale factor for the voxels
     photon_cycle_count: u32,                  // the number of interactions to simulate before adding photon to queue again
@@ -70,6 +71,7 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
         0, 0, data.voxel_len, 0,
         0, 0, 0, 1,
     }
+    data.world_to_material_coords = linalg.inverse(data.material_to_world_coords)
 
     // For now, this will have same coordinate system as world except displaced with beam center at 0,0
     data.cb_coords_to_world = matrix[4,4]f64{
