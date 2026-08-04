@@ -1,5 +1,7 @@
 package sim
 
+ELECTRON_REST_MASS_ENERGY:f32 : 0.511 // MeV
+
 /*
 Do the physics and energy deposition associated with the photoelectric
 effect. For now, I assume all the photon's energy is deposited in the
@@ -56,4 +58,15 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     }
     grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, photon.energy)
     return
+}
+
+/*
+Do the physics for Compton scattering
+*/
+handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
+    // NOTE: this code is pretty much just what openMC does, cross-referenced with
+    // the following papers.
+    // https://www.sciencedirect.com/science/article/pii/S1877705811054865
+    // https://www.sciencedirect.com/science/article/pii/S1877705811021552
+    k := photon.energy / ELECTRON_REST_MASS_ENERGY // photon energy / electron rest energy
 }
