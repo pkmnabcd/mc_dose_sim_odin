@@ -60,6 +60,16 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     return
 }
 
+sample_scatter :: proc(k: f32) -> (new_k: f32, theta: f32) {
+    // If k < 3, use Kahn's Rejection Method, else use Koblinger's Direct Method.
+    b: f32 = 1. + 2. * k
+    if k < 3.0 {
+        t := b / (b+8.)
+        x: f32
+    }
+    return 1., 1.
+}
+
 /*
 Do the physics for Compton scattering
 */
@@ -69,4 +79,5 @@ handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     // https://www.sciencedirect.com/science/article/pii/S1877705811054865
     // https://www.sciencedirect.com/science/article/pii/S1877705811021552
     k := photon.energy / ELECTRON_REST_MASS_ENERGY // photon energy / electron rest energy
+    new_k, theta := sample_scatter(k)
 }
