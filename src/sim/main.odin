@@ -79,7 +79,7 @@ main :: proc() {
     fmt.printfln("y range: [%v,%v]", setup.cb_center.y - setup.cb_length/2, setup.cb_center.y + setup.cb_length/2)
     fmt.printfln("z range: [%v,%v]", setup.cb_center.z - setup.cb_width/2, setup.cb_center.z + setup.cb_width/2)
 
-    voxels: Grid = make_grid(int(setup.voxel_count_per_dim))
+    voxels: Grid = make_grid(int(setup.voxel_count_per_dim), setup.scale_factor)
     defer destroy_grid(&voxels)
 
     // Set up photon queue, queue mutex, and photon count

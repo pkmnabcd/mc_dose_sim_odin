@@ -10,11 +10,12 @@ SetupData :: struct {
     photon_sim_count: u64,                    // the number of photons to simulate
     material_to_world_coords: matrix[4,4]f32, // the matrix to transform material coords to world coords
     photon_queue_capacity: int,               // the maximum capacity of the photon queue
+    scale_factor: f64,                        // the fixed-point scale factor for the voxels
 
     // Material stuff
     material_density: f32,             // density of the irradiated material in g/cm^3
     voxel_count_per_dim: u32,          // the number of voxels in each dimension of the array
-    attenuation_data: [dynamic][5]f32, // the linear attenuation data for your material in MeV for col 0 and cm^2/g for the other cols.
+    attenuation_data: [dynamic][5]f32, // the linear attenuation data for your material in MeV for col 0 and prob/cm for the other cols.
 
     // Beam stuff
     isocenter_pos: [3]f32, // position in world space of isocenter
@@ -41,9 +42,10 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.voxel_len = 1e-3
     data.photon_sim_count = 10_000_000
     data.photon_queue_capacity = 1000
+    data.scale_factor = 1e12
 
     data.material_density = 1. // water
-    data.voxel_count_per_dim = 1300 // voxels should take about 9 gb of memory (1300^3 * 4 byte float)
+    data.voxel_count_per_dim = 1000 // voxels should take about 8 gb of memory (1000^3 * 8 byte uint)
 
     data.isocenter_pos = [3]f32{0.5, 0.5, 0.5}
     data.source_pos = [3]f32{-1., 0.5, 0.5}
@@ -81,9 +83,11 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     if success {
         // Convert the mass cross section coefficients from xcom to
         // linear attenuation coefficients by multiplying by density
+        // also convert to m instead of cm
         for &row in data.attenuation_data {
             for i := 1; i < 5; i += 1 { // skip the photon energy that is in MeV
                 row[i] *= data.material_density
+                row[i] /= 100.
             }
         }
     }
