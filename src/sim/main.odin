@@ -6,6 +6,7 @@ import "core:container/queue"
 import "core:fmt"
 import "core:math"
 import "core:math/linalg"
+import "core:math/rand"
 import "core:os"
 import "core:sync"
 import "core:thread"
@@ -15,6 +16,15 @@ Photon :: struct {
     position: [3]f64,  // Position in world coords.
     direction: [3]f64, // Direction vector in world coords. Should be normalized.
 }
+
+SimData :: struct {
+    grid: ^Grid,             // The deposited energy grid
+    q: ^queue.Queue(Photon), // The photon queue
+    q_mut: ^sync.Mutex,      // The mutex for the photon queue
+    finish_flag: ^bool,      // The flag to signal that no more photons are coming
+}
+
+Interaction :: enum{Compton_Scatter, Pair_Production, Photoelectric}
 
 /*
 Randomly sample photons entering the surface from a cone beam and push those
@@ -71,6 +81,76 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, setup
     }
 }
 
+run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
+    grid: ^Grid = simdata.grid
+    q: ^queue.Queue(Photon) = simdata.q
+    q_mut: ^sync.Mutex = simdata.q_mut
+    finish_flag: ^bool = simdata.finish_flag
+    photon_cycle_count := setup.photon_cycle_count
+    attenuation_data := setup.attenuation_data
+
+    for ; !finish_flag^ ; {
+        // Get photon from queue
+        count: u32 = 0
+        photon: Photon
+        sync.lock(q_mut)
+        if queue.len(q^) > 0 {
+            photon = queue.dequeue(q)
+            sync.unlock(q_mut)
+        } else {
+            thread.yield()
+            sync.unlock(q_mut)
+            continue
+        }
+
+        for n in 0..<photon_cycle_count {
+            // Get the distance to next interaction
+            // and check for when the photon leaves the medium
+            interp_data: [4]f64 = util.interpolate_attenuation(attenuation_data, photon.energy)
+            total_attenuation: f64 = 0
+            for i in 0..<4 {
+                total_attenuation += interp_data[i]
+            }
+            distance := -1. * math.log(rand.float64(), math.E) / total_attenuation
+            // TODO: get the new position, convert to material coords, check them
+
+            // Choose the interaction and handle it
+            rand_num := rand.float64()
+            interaction: Interaction
+            compton_atten := interp_data[0]
+            photo_atten := interp_data[1]
+
+            if rand_num < photo_atten / total_attenuation {
+                interaction = Interaction.Photoelectric
+            } else if rand_num < (photo_atten + compton_atten) / photo_atten {
+                interaction = Interaction.Compton_Scatter
+            } else {
+                interaction = Interaction.Pair_Production
+            }
+
+            photon_finished := false
+            switch interaction {
+                case .Photoelectric:
+                    handle_photoelectric(&photon, grid, setup)
+                    photon_finished = true
+                case .Compton_Scatter:
+                    new_photon := handle_compton_scatter(&photon, grid, setup)
+                    if new_photon.energy < setup.photon_energy {
+                        // TODO: assign energy to current voxel
+                        photon_finished = true
+                    }
+                case .Pair_Production:
+                    handle_pair_production(&photon, grid, setup)
+                    photon_finished = true
+            }
+            if photon_finished do break
+
+            // update photon
+        }
+        // photon not done but through the count. enqueue
+    }
+}
+
 main :: proc() {
     setup, success := setupSim()
     defer delete(setup.attenuation_data)
@@ -90,6 +170,8 @@ main :: proc() {
     q_mut: sync.Mutex
     sync.lock(&q_mut)
     sync.unlock(&q_mut)
+
+    finish_flag: bool = false
 
     // TMP Initialize threads
     thread_count := os.get_processor_core_count()

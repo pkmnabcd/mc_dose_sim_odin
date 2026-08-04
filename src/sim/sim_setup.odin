@@ -11,6 +11,7 @@ SetupData :: struct {
     material_to_world_coords: matrix[4,4]f64, // the matrix to transform material coords to world coords
     photon_queue_capacity: int,               // the maximum capacity of the photon queue
     scale_factor: f64,                        // the fixed-point scale factor for the voxels
+    photon_cycle_count: u32,                  // the number of interactions to simulate before adding photon to queue again
 
     // Material stuff
     material_density: f64,             // density of the irradiated material in g/cm^3
@@ -43,6 +44,7 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.photon_sim_count = 10_000_000
     data.photon_queue_capacity = 1000
     data.scale_factor = 1e12
+    data.photon_cycle_count = 15
 
     data.material_density = 1. // water
     data.voxel_count_per_dim = 1000 // voxels should take about 8 gb of memory (1000^3 * 8 byte uint)
