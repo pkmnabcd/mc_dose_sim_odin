@@ -11,9 +11,9 @@ import "core:sync"
 import "core:thread"
 
 Photon :: struct {
-    energy: f32,       // Current photon energy in MeV.
-    position: [3]f32,  // Position in world coords.
-    direction: [3]f32, // Direction vector in world coords. Should be normalized.
+    energy: f64,       // Current photon energy in MeV.
+    position: [3]f64,  // Position in world coords.
+    direction: [3]f64, // Direction vector in world coords. Should be normalized.
 }
 
 /*

@@ -1,6 +1,6 @@
 package sim
 
-ELECTRON_REST_MASS_ENERGY:f32 : 0.511 // MeV
+ELECTRON_REST_MASS_ENERGY:f64 : 0.511 // MeV
 
 /*
 Do the physics and energy deposition associated with the photoelectric
@@ -18,7 +18,7 @@ handle_photoelectric :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
     voxel_count_per_dim := setup.voxel_count_per_dim
 
     // Need to convert to grid coordinates to find the best grid position
-    photon_pos := [4]f32{photon.position.x, photon.position.y, photon.position.z, 1}
+    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
     photon_pos_grid := setup.material_to_world_coords * photon_pos
     photon_pos_grid_round := [3]int{}
     for i in 0..<3 {
@@ -47,7 +47,7 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     voxel_count_per_dim := setup.voxel_count_per_dim
 
     // Need to convert to grid coordinates to find the best grid position
-    photon_pos := [4]f32{photon.position.x, photon.position.y, photon.position.z, 1}
+    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
     photon_pos_grid := setup.material_to_world_coords * photon_pos
     photon_pos_grid_round := [3]int{}
     for i in 0..<3 {
@@ -60,12 +60,12 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     return
 }
 
-sample_scatter :: proc(k: f32) -> (new_k: f32, theta: f32) {
+sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
     // If k < 3, use Kahn's Rejection Method, else use Koblinger's Direct Method.
-    b: f32 = 1. + 2. * k
+    b: f64 = 1. + 2. * k
     if k < 3.0 {
         t := b / (b+8.)
-        x: f32
+        x: f64
     }
     return 1., 1.
 }

@@ -20,12 +20,12 @@ destroy_grid :: proc(grid: ^Grid) {
     delete(grid.voxels)
 }
 
-grid_get :: proc(grid: ^Grid, x, y, z: int) -> f32 {
+grid_get :: proc(grid: ^Grid, x, y, z: int) -> f64 {
     index := (x * grid.size * grid.size) + (y * grid.size) + z
-    return f32(grid.voxels[index]) / f32(grid.scale_factor)
+    return f64(grid.voxels[index]) / f64(grid.scale_factor)
 }
 
-grid_add :: proc(grid: ^Grid, x, y, z: int, val: f32) {
+grid_add :: proc(grid: ^Grid, x, y, z: int, val: f64) {
     index := (x * grid.size * grid.size) + (y * grid.size) + z
     scaled_val := u64(f64(val) * grid.scale_factor)
     sync.atomic_add(&grid.voxels[index], scaled_val) // prevent multiple threads from writing to same voxel

@@ -19,9 +19,9 @@ Inputs:
 Returns:
 - the randomly sampled point in world coords
 */
-sampleConeField :: proc(length, width :f32, M: matrix[4,4]f32) -> [3]f32 {
-    y_coord := rand.float32_range(-1*length / 2, length / 2)
-    z_coord := rand.float32_range(-1*width / 2, width / 2)
-    self_coords := [4]f32{0, y_coord, z_coord, 1}
+sampleConeField :: proc(length, width :f64, M: matrix[4,4]f64) -> [3]f64 {
+    y_coord := rand.float64_range(-1*length / 2, length / 2)
+    z_coord := rand.float64_range(-1*width / 2, width / 2)
+    self_coords := [4]f64{0, y_coord, z_coord, 1}
     return (M * self_coords).xyz
 }

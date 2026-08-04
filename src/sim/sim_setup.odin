@@ -6,28 +6,28 @@ import "../util"
 
 SetupData :: struct {
     // General Setup
-    voxel_len: f32,                           // length of the sides of the cube that make a voxel in m
+    voxel_len: f64,                           // length of the sides of the cube that make a voxel in m
     photon_sim_count: u64,                    // the number of photons to simulate
-    material_to_world_coords: matrix[4,4]f32, // the matrix to transform material coords to world coords
+    material_to_world_coords: matrix[4,4]f64, // the matrix to transform material coords to world coords
     photon_queue_capacity: int,               // the maximum capacity of the photon queue
     scale_factor: f64,                        // the fixed-point scale factor for the voxels
 
     // Material stuff
-    material_density: f32,             // density of the irradiated material in g/cm^3
+    material_density: f64,             // density of the irradiated material in g/cm^3
     voxel_count_per_dim: u32,          // the number of voxels in each dimension of the array
-    attenuation_data: [dynamic][5]f32, // the linear attenuation data for your material in MeV for col 0 and prob/cm for the other cols.
+    attenuation_data: [dynamic][5]f64, // the linear attenuation data for your material in MeV for col 0 and prob/cm for the other cols.
 
     // Beam stuff
-    isocenter_pos: [3]f32, // position in world space of isocenter
-    source_pos:    [3]f32, // position in world space of cone beam source
-    photon_energy: f32,    // energy of monoenergetic photons in MeV
-    photon_cutoff: f32,    // the energy at which photons stop getting simulated
+    isocenter_pos: [3]f64, // position in world space of isocenter
+    source_pos:    [3]f64, // position in world space of cone beam source
+    photon_energy: f64,    // energy of monoenergetic photons in MeV
+    photon_cutoff: f64,    // the energy at which photons stop getting simulated
 
     // Cone beam specific
-    cb_length: f32,                     // length of one side of cone beam surface in m
-    cb_width: f32,                      // length of other side of cone beam surface in m
-    cb_center: [3]f32,                  // position in world space of the center of cone beam surface
-    cb_coords_to_world: matrix[4,4]f32, // the matrix needed to transform the field surface coords to world coords
+    cb_length: f64,                     // length of one side of cone beam surface in m
+    cb_width: f64,                      // length of other side of cone beam surface in m
+    cb_center: [3]f64,                  // position in world space of the center of cone beam surface
+    cb_coords_to_world: matrix[4,4]f64, // the matrix needed to transform the field surface coords to world coords
 }
 
 /*
@@ -47,8 +47,8 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.material_density = 1. // water
     data.voxel_count_per_dim = 1000 // voxels should take about 8 gb of memory (1000^3 * 8 byte uint)
 
-    data.isocenter_pos = [3]f32{0.5, 0.5, 0.5}
-    data.source_pos = [3]f32{-1., 0.5, 0.5}
+    data.isocenter_pos = [3]f64{0.5, 0.5, 0.5}
+    data.source_pos = [3]f64{-1., 0.5, 0.5}
     data.photon_energy = 1. // MeV
     data.photon_cutoff = 0.001
 
@@ -56,13 +56,13 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.cb_width = 0.3
 
     // Determine field center
-    field_normal: [3]f32 = [3]f32{1,0,0}// hitting the yz plane
-    plane_pt: [3]f32 = [3]f32{-1*data.voxel_len/2, 0, 0} // account for the depth of the voxel center
-    line_vec: [3]f32 = linalg.normalize(data.isocenter_pos - data.source_pos)
+    field_normal: [3]f64 = [3]f64{1,0,0}// hitting the yz plane
+    plane_pt: [3]f64 = [3]f64{-1*data.voxel_len/2, 0, 0} // account for the depth of the voxel center
+    line_vec: [3]f64 = linalg.normalize(data.isocenter_pos - data.source_pos)
     data.cb_center = util.plane_line_intersect_point(plane_pt, data.source_pos, line_vec, field_normal)
 
     // For now, material has same coordinate system as world except on mm scale instead of m.
-    data.material_to_world_coords = matrix[4,4]f32{
+    data.material_to_world_coords = matrix[4,4]f64{
         data.voxel_len, 0, 0, 0,
         0, data.voxel_len, 0, 0,
         0, 0, data.voxel_len, 0,
@@ -70,7 +70,7 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     }
 
     // For now, this will have same coordinate system as world except displaced with beam center at 0,0
-    data.cb_coords_to_world = matrix[4,4]f32{
+    data.cb_coords_to_world = matrix[4,4]f64{
         1, 0, 0, data.cb_center.x,
         0, 1, 0, data.cb_center.y,
         0, 0, 1, data.cb_center.z,
