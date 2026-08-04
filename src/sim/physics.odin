@@ -1,5 +1,7 @@
 package sim
 
+import "../util"
+
 import "core:math"
 import "core:math/rand"
 
@@ -33,6 +35,7 @@ handle_photoelectric :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
     grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, photon.energy)
     return
 }
+// TODO: move position checking code to the function that calls this
 
 /*
 Do the physics and energy deposition associated with pair production.
@@ -62,6 +65,7 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
     grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, photon.energy)
     return
 }
+// TODO: move position checking code to the function that calls this
 
 sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
     // If k < 3, use Kahn's Rejection Method, else use Koblinger's Direct Method.
@@ -111,11 +115,35 @@ sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
 /*
 Do the physics for Compton scattering
 */
-handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) {
+handle_compton_scatter :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) -> (new_photon: Photon) {
     // NOTE: this code is pretty much just what openMC does, cross-referenced with
     // the following papers.
     // https://www.sciencedirect.com/science/article/pii/S1877705811054865
     // https://www.sciencedirect.com/science/article/pii/S1877705811021552
     k := photon.energy / ELECTRON_REST_MASS_ENERGY // photon energy / electron rest energy
     new_k, theta := sample_scatter(k)
+    new_energy := new_k * ELECTRON_REST_MASS_ENERGY
+    phi := rand.float64_range(0., 2.*math.PI)
+    deposited := photon.energy - new_energy
+
+    new_photon.energy = new_energy
+    new_photon.position = photon.position
+    new_photon.direction = util.rotate_direction(photon.direction, theta, phi)
+
+    // TODO: move position checking code to the function that calls this
+    // so I don't have to do all the above work
+    // Adding deposited energy to voxel
+    // Need to convert to grid coordinates to find the best grid position
+    photon_pos := [4]f64{photon.position.x, photon.position.y, photon.position.z, 1}
+    photon_pos_grid := setup.material_to_world_coords * photon_pos
+    photon_pos_grid_round := [3]int{}
+    for i in 0..<3 {
+        pos := int(photon_pos_grid[i])
+        if pos >= int(setup.voxel_count_per_dim) do return // skip photons that have escaped the bounds of the simulation
+
+        photon_pos_grid_round[i] = pos
+    }
+    grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, deposited)
+    return
 }
+// TODO: move position checking code to the function that calls this
