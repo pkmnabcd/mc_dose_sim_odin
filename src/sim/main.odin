@@ -6,6 +6,7 @@ import "core:container/queue"
 import "core:fmt"
 import "core:math"
 import "core:math/linalg"
+import "core:os"
 import "core:sync"
 import "core:thread"
 
@@ -91,8 +92,9 @@ main :: proc() {
     sync.unlock(&q_mut)
 
     // TMP Initialize threads
-    MAX_THREADS :: 8
-    threads: [MAX_THREADS]^thread.Thread
+    thread_count := os.get_processor_core_count()
+    threads := make([]^thread.Thread, thread_count)
+    defer delete(threads)
     threads[0] = thread.create_and_start_with_poly_data3(&photon_q, &q_mut, &setup, run_queue_fill_thread)
     for t in threads {
         thread.destroy(t)
