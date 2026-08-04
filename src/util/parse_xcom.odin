@@ -12,7 +12,7 @@ Input:
 - filepath: the path to the file from pwd. This file should start with the data (no headers), and it should have 8 columns.
 
 Returns:
-- A dynamic array of [5]f32 of the read data. Each array has the order: [photon energy, incoherent scattering, photoelectric, pp nuclear, pp electron]
+- A dynamic array of [5]f32 of the read data. Each array has the order: [photon energy, incoherent scattering, photoelectric, pp nuclear, pp electron]. The units of these values are MeV for photon energy and cm^2 / g for the others
 */
 parse_xcom_data :: proc(filepath: string) -> (out: [dynamic][5]f32, incomplete: bool) {
     data, err := os.read_entire_file_from_path(filepath, context.allocator)

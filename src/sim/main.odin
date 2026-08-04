@@ -73,7 +73,7 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, setup
 
 main :: proc() {
     setup, success := setupSim()
-    defer delete(setup.xcom_data)
+    defer delete(setup.attenuation_data)
 
     fmt.println("Beam Center: ", setup.cb_center)
     fmt.printfln("y range: [%v,%v]", setup.cb_center.y - setup.cb_length/2, setup.cb_center.y + setup.cb_length/2)

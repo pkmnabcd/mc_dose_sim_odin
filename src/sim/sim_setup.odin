@@ -12,9 +12,9 @@ SetupData :: struct {
     photon_queue_capacity: int,               // the maximum capacity of the photon queue
 
     // Material stuff
-    material_density: f32,      // density of the irradiated material in kg/m^3
-    voxel_count_per_dim: u32,   // the number of voxels in each dimension of the array
-    xcom_data: [dynamic][5]f32, // the mass cross section data for your material
+    material_density: f32,             // density of the irradiated material in g/cm^3
+    voxel_count_per_dim: u32,          // the number of voxels in each dimension of the array
+    attenuation_data: [dynamic][5]f32, // the linear attenuation data for your material in MeV for col 0 and cm^2/g for the other cols.
 
     // Beam stuff
     isocenter_pos: [3]f32, // position in world space of isocenter
@@ -42,7 +42,7 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.photon_sim_count = 10_000_000
     data.photon_queue_capacity = 1000
 
-    data.material_density = 998. // water
+    data.material_density = 1. // water
     data.voxel_count_per_dim = 1300 // voxels should take about 9 gb of memory (1300^3 * 4 byte float)
 
     data.isocenter_pos = [3]f32{0.5, 0.5, 0.5}
@@ -75,8 +75,17 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
         0, 0, 0, 1,
     }
 
-    read_incomplete: bool
-    data.xcom_data, read_incomplete = util.parse_xcom_data("data/water_xcom.txt")
+    xcom_data, read_incomplete := util.parse_xcom_data("data/water_xcom.txt")
+    data.attenuation_data = xcom_data
     success = !read_incomplete
+    if success {
+        // Convert the mass cross section coefficients from xcom to
+        // linear attenuation coefficients by multiplying by density
+        for &row in data.attenuation_data {
+            for i := 1; i < 5; i += 1 { // skip the photon energy that is in MeV
+                row[i] *= data.material_density
+            }
+        }
+    }
     return
 }
