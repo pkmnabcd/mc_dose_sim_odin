@@ -1,5 +1,8 @@
 package sim
 
+import "core:math"
+import "core:math/rand"
+
 ELECTRON_REST_MASS_ENERGY:f64 : 0.511 // MeV
 
 /*
@@ -63,11 +66,46 @@ handle_pair_production :: proc(photon: ^Photon, grid: ^Grid, setup: ^SetupData) 
 sample_scatter :: proc(k: f64) -> (new_k: f64, theta: f64) {
     // If k < 3, use Kahn's Rejection Method, else use Koblinger's Direct Method.
     b: f64 = 1. + 2. * k
-    if k < 3.0 {
+    mu: f64
+    if k < 3. {
+        // Kahn's rejection
         t := b / (b+8.)
         x: f64
+        for ;; {
+            if rand.float64() < t {
+                r := rand.float64_range(0., 2.)
+                x = 1. + k * r
+                if rand.float64() < 4. / x * (1. - 1. / x) {
+                    mu = 1 - r
+                    break
+                }
+            } else {
+                x = b / (1. + 2. * k * rand.float64())
+                mu = 1. + (1. - x) / k
+                if rand.float64() < 0.5 * (mu * mu + 1. / x) {
+                    break
+                }
+            }
+        }
+        new_k = k / x
+    } else {
+        // Koblinger's direct
+        gamma := 1. - math.pow(b, -2.)
+        s := rand.float64()
+        s *= 4. / k + 0.5 * gamma + (1. - (1. + b) / (k*k)) * math.log(b, base=math.E)
+        if s <= 2. / k {
+            new_k = k / (1. + 2. * k * rand.float64())
+        } else if s <= 4. / k {
+            new_k = k * (1. + 2. * k * rand.float64()) / b
+        } else if s <= 4. / k + 0.5 * gamma {
+            new_k = k * math.sqrt(1. - gamma * rand.float64())
+        } else {
+            new_k = k / math.pow(b, rand.float64())
+        }
+        mu = 1. + 1. / k - 1. / new_k
     }
-    return 1., 1.
+    theta = math.acos(mu)
+    return
 }
 
 /*
