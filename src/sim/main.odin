@@ -10,6 +10,7 @@ import "core:math/rand"
 import "core:os"
 import "core:sync"
 import "core:thread"
+import "core:time"
 
 Photon :: struct {
     energy: f64,       // Current photon energy in MeV.
@@ -207,12 +208,34 @@ main :: proc() {
 
     finish_flag: bool = false
 
-    // TMP Initialize threads
+    // Initialize threads
     thread_count := os.get_processor_core_count()
     threads := make([]^thread.Thread, thread_count)
     defer delete(threads)
+    simdata := SimData{&voxels, &photon_q, &q_mut, &finish_flag}
     threads[0] = thread.create_and_start_with_poly_data3(&photon_q, &q_mut, &setup, run_queue_fill_thread)
-    for t in threads {
-        thread.destroy(t)
+    for i in 1..<len(threads) {
+        thread.create_and_start_with_poly_data2(&simdata, &setup, run_simulation_thread)
     }
+    // wait for the queue thread to finish queueing
+    thread.destroy(threads[0])
+
+    // wait to make sure that all threads have finished
+    empty_queue_wait: time.Duration = 2 * time.Second
+    for ;; {
+        if queue.len(photon_q) == 0 {
+            time.sleep(empty_queue_wait)
+            break
+        }
+    }
+    finish_flag = true
+    for i in 1..<len(threads) {
+        thread.destroy(threads[i])
+    }
+
+    // Divide by the mass of the voxel to get dose
+
+    // Account for the varying number of simulated photons
+
+    // Save file
 }
