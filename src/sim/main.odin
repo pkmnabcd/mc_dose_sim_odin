@@ -68,6 +68,8 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initi
     // TODO: generate photons in a local queue before locking and updating the global photon queue
     // so you don't have to block while generating the photons
     // TODO: also, use conditional variable to know when to take take the lock
+    // TODO: also fix some deadlock that occasionally happens. Figure out what's up with that.
+    // It might have to do with how the program checks for being finished or how this thread waits
     photon_sim_count: u64 = setup.photon_sim_count
     fill_level: int = setup.photon_queue_capacity / 2
     capacity: int = setup.photon_queue_capacity
@@ -182,6 +184,7 @@ main :: proc() {
     }
     // wait for the queue thread to finish queueing
     thread.destroy(threads[0])
+    fmt.println("Queue thread finished")
 
     // wait to make sure that all threads have finished
     empty_queue_wait: time.Duration = 2 * time.Second
@@ -195,11 +198,32 @@ main :: proc() {
     for i in 1..<len(threads) {
         thread.destroy(threads[i])
     }
-    fmt.printfln("Queue at end: %v", photon_q)
+    fmt.println("Simulation threads finished")
 
-    // Divide by the mass of the voxel to get dose
+    // For now, assume a certain number of photons enter field per second
+    // and multiply by the preset amount of time field was on to get a
+    // factor to scale the dose by
+    n_real := setup.photon_rate * setup.beam_on_time
+    sim_scale := n_real / f64(setup.photon_sim_count)
 
-    // Account for the varying number of simulated photons
+    // Get the dose at each voxel in Gy
+    for x in 0..<setup.voxel_count_per_dim {
+        for y in 0..<setup.voxel_count_per_dim {
+            for z in 0..<setup.voxel_count_per_dim {
+                grid_mult(&voxels, int(x), int(y), int(z), 1.6022e-13 / setup.voxel_mass * sim_scale) // convert to J and / by mass and scale to real beam
+            }
+        }
+    }
+    fmt.println("Dose calc finished")
+    fmt.printfln("Linear attenuation coefficient: %v")
+
+    // TODO: figure out why no dose is deposited at first layer
+    s := voxels.voxels[0:1000]
+    fmt.println(s)
+    s = voxels.voxels[1000:2000]
+    fmt.println(s)
+    s = voxels.voxels[500*1000:500*1000+1000]
+    fmt.println(s)
 
     // Save file
 }

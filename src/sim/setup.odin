@@ -18,12 +18,15 @@ SetupData :: struct {
     material_density: f64,             // density of the irradiated material in g/cm^3
     voxel_count_per_dim: u32,          // the number of voxels in each dimension of the array
     attenuation_data: [dynamic][5]f64, // the linear attenuation data for your material in MeV for col 0 and prob/cm for the other cols.
+    voxel_mass: f64,                   // the mass of each voxel in kg
 
     // Beam stuff
     isocenter_pos: [3]f64, // position in world space of isocenter
     source_pos:    [3]f64, // position in world space of cone beam source
     photon_energy: f64,    // energy of monoenergetic photons in MeV
     photon_cutoff: f64,    // the energy at which photons stop getting simulated
+    photon_rate: f64,      // the rate at which photons reach the beam surface in photon/second
+    beam_on_time: f64,     // the amount of time the beam is left on in seconds
 
     // Cone beam specific
     cb_length: f64,                     // length of one side of cone beam surface in m
@@ -47,13 +50,17 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
     data.scale_factor = 1e12
     data.photon_cycle_count = 15
 
-    data.material_density = 1. // water
+    data.material_density = 1. // water in g/cm^3
     data.voxel_count_per_dim = 1000 // voxels should take about 8 gb of memory (1000^3 * 8 byte uint)
+    data.voxel_mass = data.voxel_len * data.voxel_len * data.voxel_len * data.material_density * 1000.
+
 
     data.isocenter_pos = [3]f64{0.5, 0.5, 0.5}
     data.source_pos = [3]f64{-1., 0.5, 0.5}
     data.photon_energy = 1. // MeV
     data.photon_cutoff = 0.001
+    data.photon_rate = 1e13
+    data.beam_on_time = 3.
 
     data.cb_length = 0.2
     data.cb_width = 0.3
