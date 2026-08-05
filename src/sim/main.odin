@@ -93,14 +93,9 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initi
 }
 
 run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
-    grid: ^Grid = simdata.grid
     q: ^queue.Queue(Photon) = simdata.q
     q_mut: ^sync.Mutex = simdata.q_mut
     finish_flag: ^bool = simdata.finish_flag
-    photon_cycle_count := setup.photon_cycle_count
-    attenuation_data := setup.attenuation_data
-    voxel_count_per_dim := setup.voxel_count_per_dim
-    world_to_material_coords := setup.world_to_material_coords
 
     for ; !finish_flag^ ; {
         // Get photon from queue
@@ -116,81 +111,14 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
             continue
         }
 
-        photon_finished := false
-        for _ in 0..<photon_cycle_count {
-            // Get the distance to next interaction
-            // and check for when the photon leaves the medium
-            interp_data: [4]f64 = util.interpolate_attenuation(attenuation_data, photon.energy)
-            total_attenuation: f64 = 0
-            for i in 0..<4 {
-                total_attenuation += interp_data[i]
-            }
-            distance := -1. * math.log(rand.float64(), math.E) / total_attenuation // distance should be in m
-            photon_pos := photon.position + distance * photon.direction
-
-            // Get grid pos and make sure it's in the grid
-            // Need to convert to grid coordinates to find the best grid position
-            photon_pos4 := [4]f64{photon_pos.x, photon_pos.y, photon_pos.z, 1}
-            photon_pos_grid := world_to_material_coords * photon_pos4
-            photon_pos_grid_round := [3]int{}
-            photon_out_of_bounds := false
-            for i in 0..<3 {
-                pos := int(math.round(photon_pos_grid[i]))
-                if pos >= int(voxel_count_per_dim) || pos < 0 { // skip photons that have escaped the bounds of the simulation
-                    photon_out_of_bounds = true
-                    break
-                }
-
-                photon_pos_grid_round[i] = pos
-            }
-            if photon_out_of_bounds { // get the next photon
-                photon_finished = true
-                break
-            }
-
-            // Choose the interaction and handle it
-            rand_num := rand.float64()
-            interaction: Interaction
-            compton_atten := interp_data[0]
-            photo_atten := interp_data[1]
-
-            if rand_num < photo_atten / total_attenuation {
-                interaction = Interaction.Photoelectric
-            } else if rand_num < (photo_atten + compton_atten) / photo_atten {
-                interaction = Interaction.Compton_Scatter
-            } else {
-                interaction = Interaction.Pair_Production
-            }
-
-            new_photon: Photon = photon
-            switch interaction {
-                case .Photoelectric:
-                    handle_photoelectric(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
-                    photon_finished = true
-                case .Compton_Scatter:
-                    new_photon = handle_compton_scatter(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
-                    if new_photon.energy < setup.photon_cutoff {
-                        grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, new_photon.energy)
-                        photon_finished = true
-                    }
-                case .Pair_Production:
-                    handle_pair_production(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
-                    photon_finished = true
-            }
-            if photon_finished do break
-
-            // update photon
-            photon.energy = new_photon.energy
-            photon.direction = new_photon.direction
-            photon.position = photon_pos
-        }
+        photon_finished := simulate_photon(&photon, simdata, setup)
         if photon_finished do continue
 
         // photon not finished after 'photon_cycle_count' cycles. enqueue when safe
         sync.lock(q_mut)
         for ; queue.space(q^) <= 0 ; {
             sync.unlock(q_mut)
-            time.sleep(5*time.Millisecond)
+            time.sleep(2*time.Millisecond)
             sync.lock(q_mut)
         }
         queue.enqueue(q, photon)
