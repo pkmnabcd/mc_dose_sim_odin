@@ -42,10 +42,8 @@ Returns:
 */
 setupSim :: proc() -> (data: SetupData, success: bool) {
     data.voxel_len = 1e-3
-    //data.photon_sim_count = 10_000_000
-    data.photon_sim_count = 20
-    //data.photon_queue_capacity = 1000
-    data.photon_queue_capacity = 10
+    data.photon_sim_count = 10_000_000
+    data.photon_queue_capacity = 1000
     data.scale_factor = 1e12
     data.photon_cycle_count = 15
 
@@ -93,7 +91,7 @@ setupSim :: proc() -> (data: SetupData, success: bool) {
         for &row in data.attenuation_data {
             for i := 1; i < 5; i += 1 { // skip the photon energy that is in MeV
                 row[i] *= data.material_density
-                row[i] /= 100.
+                row[i] *= 100.
             }
         }
     }

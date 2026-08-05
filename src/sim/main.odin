@@ -70,6 +70,7 @@ Inputs:
 run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initial_count: u64, setup: ^SetupData) {
     // TODO: generate photons in a local queue before locking and updating the global photon queue
     // so you don't have to block while generating the photons
+    // TODO: also, use conditional variable to know when to take take the lock
     photon_sim_count: u64 = setup.photon_sim_count
     fill_level: int = setup.photon_queue_capacity / 2
     capacity: int = setup.photon_queue_capacity
@@ -86,7 +87,7 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initi
             sync.unlock(q_mut)
         } else {
             sync.unlock(q_mut)
-            thread.yield()
+            time.sleep(1*time.Millisecond)
         }
     }
 }
@@ -111,7 +112,7 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
             sync.unlock(q_mut)
         } else {
             sync.unlock(q_mut)
-            thread.yield()
+            time.sleep(1*time.Millisecond)
             continue
         }
 
@@ -137,8 +138,6 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
                 pos := int(math.round(photon_pos_grid[i]))
                 if pos >= int(voxel_count_per_dim) || pos < 0 { // skip photons that have escaped the bounds of the simulation
                     photon_out_of_bounds = true
-                    // TODO: figure out why photons are going out of bounds. See distance. Maybe it's the log or the attenuation calcs
-                    fmt.printfln("Photon out of bounds at\n\tWorld position: %v\n\tMaterial Position: %v\n\tx: %v", photon_pos, photon_pos_grid, distance)
                     break
                 }
 
@@ -168,18 +167,15 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
                 case .Photoelectric:
                     handle_photoelectric(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
                     photon_finished = true
-                    fmt.println("Photoelectric done")
                 case .Compton_Scatter:
                     new_photon = handle_compton_scatter(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
                     if new_photon.energy < setup.photon_cutoff {
                         grid_add(grid, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, new_photon.energy)
                         photon_finished = true
                     }
-                    fmt.println("Compton done")
                 case .Pair_Production:
                     handle_pair_production(&photon, photon_pos_grid_round.x, photon_pos_grid_round.y, photon_pos_grid_round.z, grid)
                     photon_finished = true
-                    fmt.println("Pair done")
             }
             if photon_finished do break
 
