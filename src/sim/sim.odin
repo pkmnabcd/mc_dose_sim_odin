@@ -24,6 +24,17 @@ get_grid_indexes :: proc(photon_pos: [3]f64, setup: ^SetupData) -> (indexes: [3]
     return
 }
 
+/*
+Do the steps to simulate a photon
+
+Inputs:
+- photon: the photon to simulate
+- simdata: the simulation data that will be used and updated like the photon queue and the grid
+- setup: the config data that needs to be referenced
+
+Returns:
+- finished: whether or not the photon is finished being simulated
+*/
 simulate_photon :: proc(photon: ^Photon, simdata: ^SimData, setup: ^SetupData) -> (finished: bool) {
     finished = false
     grid: ^Grid = simdata.grid

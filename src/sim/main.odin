@@ -1,12 +1,8 @@
 package sim
 
-import "../util"
-
 import "core:container/queue"
 import "core:fmt"
-import "core:math"
 import "core:math/linalg"
-import "core:math/rand"
 import "core:os"
 import "core:sync"
 import "core:thread"
@@ -92,6 +88,13 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initi
     }
 }
 
+/*
+The execution done by the threads that simulate the photon interactions
+
+Inputs:
+- simdata: the simulation data that will be used and updated like the photon queue and the grid
+- setup: the config data that needs to be referenced
+*/
 run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
     q: ^queue.Queue(Photon) = simdata.q
     q_mut: ^sync.Mutex = simdata.q_mut
