@@ -200,11 +200,18 @@ main :: proc() {
     }
     fmt.println("Simulation threads finished")
 
+    fmt.println("Energy (MeV): ", grid_get(&voxels, 0,500,498))
+    fmt.println("Energy (MeV): ", grid_get(&voxels, 0,500,499))
+    fmt.println("Energy (MeV): ", grid_get(&voxels, 0,500,500))
+    fmt.println("Energy (MeV): ", grid_get(&voxels, 0,500,501))
+    fmt.println("Energy (MeV): ", grid_get(&voxels, 0,500,502))
+
     // For now, assume a certain number of photons enter field per second
     // and multiply by the preset amount of time field was on to get a
     // factor to scale the dose by
     n_real := setup.photon_rate * setup.beam_on_time
     sim_scale := n_real / f64(setup.photon_sim_count)
+    fmt.println("n_real/n_sim: ", sim_scale)
 
     // Get the dose at each voxel in Gy
     for x in 0..<setup.voxel_count_per_dim {
@@ -215,6 +222,12 @@ main :: proc() {
         }
     }
     fmt.println("Dose calc finished")
+
+    fmt.println("Dose (Gy): ", grid_get(&voxels, 0,500,498))
+    fmt.println("Dose (Gy): ", grid_get(&voxels, 0,500,499))
+    fmt.println("Dose (Gy): ", grid_get(&voxels, 0,500,500))
+    fmt.println("Dose (Gy): ", grid_get(&voxels, 0,500,501))
+    fmt.println("Dose (Gy): ", grid_get(&voxels, 0,500,502))
 
     s := voxels.voxels[500*1000:500*1000+1000]
     fmt.println("First layer through middle with varying z")
