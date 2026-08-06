@@ -75,18 +75,32 @@ run_queue_fill_thread :: proc(q: ^queue.Queue(Photon), q_mut: ^sync.Mutex, initi
     capacity: int = setup.photon_queue_capacity
     photon_enqueue_count: u64 = initial_count // this queue was filled before being managed by the thread
 
-    // Fill the photon queue once it half full until photon_sim_count reached
-    for ; photon_enqueue_count < photon_sim_count ; { // enqueue stops after this reaches setup.photon_sim_count
-        sync.lock(q_mut)
-        space := queue.space(q^)
+    local_q: queue.Queue(Photon)
+    queue.init(&local_q, setup.photon_queue_capacity)
+
+    // TODO: while I've implemented pretty well the local buffer to global queue thing, there
+    // is a problem where the added_count doesn't actually say how many photons were processed,
+    // only how many were put into the local queue. added_count may be useless now and now it's
+    // to_add_count that is the useful info?
+    // TODO: and there is still an occasional deadlock issue somewhere
+    for ; photon_enqueue_count < photon_sim_count ; {
         remaining_count: u64 = photon_sim_count - photon_enqueue_count
-        if space > fill_level || remaining_count < u64(space) {
-            added_count := sample_fill_queue(q, remaining_count, setup)
-            photon_enqueue_count += added_count
-            sync.unlock(q_mut)
-        } else {
-            sync.unlock(q_mut)
-            time.sleep(1*time.Millisecond)
+        added_count := sample_fill_queue(&local_q, remaining_count, setup)
+        photon_enqueue_count += added_count
+        for ;; { // wait until good time to take lock
+            sync.lock(q_mut)
+            space := queue.space(q^)
+            if space > fill_level || remaining_count <= u64(space) {
+                to_add_count: int = min(space, queue.len(local_q))
+                for i in 0..<to_add_count {
+                    queue.enqueue(q, queue.dequeue(&local_q))
+                }
+                sync.unlock(q_mut)
+                break
+            } else {
+                sync.unlock(q_mut)
+                time.sleep(50*time.Microsecond)
+            }
         }
     }
 }
@@ -113,7 +127,7 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
             sync.unlock(q_mut)
         } else {
             sync.unlock(q_mut)
-            time.sleep(1*time.Millisecond)
+            time.sleep(100*time.Microsecond)
             continue
         }
 
