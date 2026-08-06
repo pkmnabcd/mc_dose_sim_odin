@@ -215,14 +215,12 @@ main :: proc() {
         }
     }
     fmt.println("Dose calc finished")
-    fmt.printfln("Linear attenuation coefficient: %v")
 
-    // TODO: figure out why no dose is deposited at first layer
-    s := voxels.voxels[0:1000]
+    s := voxels.voxels[500*1000:500*1000+1000]
+    fmt.println("First layer through middle with varying z")
     fmt.println(s)
-    s = voxels.voxels[1000:2000]
-    fmt.println(s)
-    s = voxels.voxels[500*1000:500*1000+1000]
+    s = voxels.voxels[500*(1000*1000)+500*1000:500*(1000*1000)+500*1000+1000]
+    fmt.println("x=0.5, y=0.5, z=[0,1000]")
     fmt.println(s)
 
     // Save file
