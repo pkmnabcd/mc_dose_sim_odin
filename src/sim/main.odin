@@ -135,6 +135,7 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
         if photon_finished do continue
 
         // photon not finished after 'photon_cycle_count' cycles. enqueue when safe
+        // TODO: fix deadlock condition where all threads could be stuck trying to enqueue photons
         sync.lock(q_mut)
         for ; queue.space(q^) <= 0 ; {
             sync.unlock(q_mut)
