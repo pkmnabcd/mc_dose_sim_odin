@@ -117,32 +117,46 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
     q_mut: ^sync.Mutex = simdata.q_mut
     finish_flag: ^bool = simdata.finish_flag
 
+    already_have_photon := false
+    photon: Photon
     for ; !finish_flag^ ; {
         // Get photon from queue
         count: u32 = 0
-        photon: Photon
-        sync.lock(q_mut)
-        if queue.len(q^) > 0 {
-            photon = queue.dequeue(q)
-            sync.unlock(q_mut)
-        } else {
-            sync.unlock(q_mut)
-            time.sleep(100*time.Microsecond)
-            continue
-        }
+        if !already_have_photon {
+            sync.lock(q_mut)
+            if queue.len(q^) > 0 {
+                photon = queue.dequeue(q)
+                sync.unlock(q_mut)
+            } else {
+                sync.unlock(q_mut)
+                time.sleep(100*time.Microsecond)
+                continue
+            }
+        } else do already_have_photon = false
 
         photon_finished := simulate_photon(&photon, simdata, setup)
         if photon_finished do continue
 
         // photon not finished after 'photon_cycle_count' cycles. enqueue when safe
-        // TODO: fix deadlock condition where all threads could be stuck trying to enqueue photons
+        LOCK_LIMIT :: 30
+        lock_count := 0
         sync.lock(q_mut)
-        for ; queue.space(q^) <= 0 ; {
+        for ; lock_count < LOCK_LIMIT && queue.space(q^) <= 0 ; lock_count += 1 {
             sync.unlock(q_mut)
             time.sleep(2*time.Millisecond)
             sync.lock(q_mut)
         }
-        queue.enqueue(q, photon)
+
+        if lock_count == LOCK_LIMIT {
+            // Dequeue next photon before trying to enqueue this one to prevent deadlock
+            new_photon := queue.dequeue(q)
+            queue.enqueue(q, photon)
+            photon = new_photon
+            already_have_photon = true
+            fmt.println("Avoiding deadlock")
+        } else {
+            queue.enqueue(q, photon)
+        }
         sync.unlock(q_mut)
     }
 }
