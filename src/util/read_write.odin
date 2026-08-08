@@ -2,8 +2,38 @@ package util
 
 import "core:fmt"
 import "core:os"
+import "core:slice"
 import "core:strconv"
 import "core:strings"
+
+/*
+Write raw dose array to a file
+*/
+write_dose_to_raw :: proc(filepath: string, data: ^[]u64, scale_factor: f64) -> (success: bool) {
+    success = true
+
+    flags: os.File_Flags = {.Write, .Create, .Trunc}
+    file, open_err := os.open(filepath, flags=flags)
+    if open_err != nil {
+        fmt.printfln("Failed to open file %v: %v", filepath, open_err)
+        success = false
+        return
+    }
+    defer os.close(file)
+
+    for val in data {
+        val_f32: f32 = f32(f64(val) / scale_factor)
+        bytes := slice.bytes_from_ptr(&val_f32, size_of(f32))
+        written, write_err := os.write(file, bytes)
+        if write_err != nil {
+            fmt.printfln("Failed to write the file %v: %v", filepath, write_err)
+            success = false
+            return
+        }
+    }
+    return
+}
+// TODO: test this
 
 /*
 Reads the given xcom database file into an array of data.

@@ -22,7 +22,7 @@ destroy_grid :: proc(grid: ^Grid) {
 
 grid_get :: proc(grid: ^Grid, x, y, z: int) -> f64 {
     index := (x * grid.size * grid.size) + (y * grid.size) + z
-    return f64(grid.voxels[index]) / f64(grid.scale_factor)
+    return f64(grid.voxels[index]) / grid.scale_factor
 }
 
 grid_add :: proc(grid: ^Grid, x, y, z: int, val: f64) {
