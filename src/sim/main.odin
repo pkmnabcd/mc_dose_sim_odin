@@ -1,5 +1,7 @@
 package sim
 
+import "../util"
+
 import "core:container/queue"
 import "core:fmt"
 import "core:math/linalg"
@@ -266,4 +268,11 @@ main :: proc() {
     fmt.println(s)
 
     // Save file
+    fmt.println("Attempting to write the raw dose file")
+    success = util.write_dose_to_raw("dose.raw", &voxels.voxels, voxels.scale_factor)
+    if !success {
+        fmt.println("Error: failed to write dose file")
+        return
+    }
+    fmt.println("Write success")
 }
