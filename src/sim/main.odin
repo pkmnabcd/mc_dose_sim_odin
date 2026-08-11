@@ -143,13 +143,13 @@ run_simulation_thread :: proc(simdata: ^SimData, setup: ^SetupData) {
         LOCK_LIMIT :: 30
         lock_count := 0
         sync.lock(q_mut)
-        for ; lock_count < LOCK_LIMIT && queue.space(q^) <= 0 ; lock_count += 1 {
+        for ; queue.space(q^) <= 0 && lock_count < LOCK_LIMIT ; lock_count += 1 {
             sync.unlock(q_mut)
             time.sleep(2*time.Millisecond)
             sync.lock(q_mut)
         }
 
-        if lock_count == LOCK_LIMIT {
+        if queue.space(q^) <= 0 && lock_count == LOCK_LIMIT {
             // Dequeue next photon before trying to enqueue this one to prevent deadlock
             new_photon := queue.dequeue(q)
             queue.enqueue(q, photon)
