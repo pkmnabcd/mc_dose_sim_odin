@@ -12,6 +12,10 @@ Write raw dose array to a file
 write_dose_to_raw :: proc(filepath: string, data: ^[]u64, scale_factor: f64) -> (success: bool) {
     success = true
 
+    CHUNK_LEN: int : 4_000_000 // bytes
+    chunk := make([]f32, CHUNK_LEN)
+    defer delete(chunk)
+
     flags: os.File_Flags = {.Write, .Create, .Trunc}
     file, open_err := os.open(filepath, flags=flags)
     if open_err != nil {
@@ -21,9 +25,26 @@ write_dose_to_raw :: proc(filepath: string, data: ^[]u64, scale_factor: f64) -> 
     }
     defer os.close(file)
 
+    chunk_index := 0
     for val in data {
-        val_f32: f32 = f32(f64(val) / scale_factor)
-        bytes := slice.bytes_from_ptr(&val_f32, size_of(f32))
+        chunk[chunk_index] = f32(f64(val) / scale_factor)
+        if chunk_index == CHUNK_LEN-1 {
+            bytes := slice.to_bytes(chunk)
+            written, write_err := os.write(file, bytes)
+            if write_err != nil {
+                fmt.printfln("Failed to write the file %v: %v", filepath, write_err)
+                success = false
+                return
+            }
+            chunk_index = 0
+        } else {
+            chunk_index += 1
+        }
+    }
+
+    // Flush remaining elements in chunk
+    if chunk_index > 0 {
+        bytes := slice.to_bytes(chunk)
         written, write_err := os.write(file, bytes)
         if write_err != nil {
             fmt.printfln("Failed to write the file %v: %v", filepath, write_err)
@@ -33,7 +54,6 @@ write_dose_to_raw :: proc(filepath: string, data: ^[]u64, scale_factor: f64) -> 
     }
     return
 }
-// TODO: test this
 
 /*
 Reads the given xcom database file into an array of data.
