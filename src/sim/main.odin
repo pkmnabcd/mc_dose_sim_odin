@@ -7,6 +7,7 @@ import "core:fmt"
 import "core:math/linalg"
 import "core:mem"
 import "core:os"
+import "core:slice"
 import "core:sync"
 import "core:thread"
 import "core:time"
@@ -268,11 +269,33 @@ main :: proc() {
     fmt.println(s)
 
     // Save file
-    fmt.println("Attempting to write the raw dose file")
-    success = util.write_dose_to_raw("dose.raw", &voxels.voxels, voxels.scale_factor)
-    if !success {
-        fmt.println("Error: failed to write dose file")
-        return
+    SAVE_FILE :: false
+    if SAVE_FILE {
+        fmt.println("Attempting to write the raw dose file")
+        success = util.write_dose_to_raw("dose.raw", &voxels.voxels, voxels.scale_factor)
+        if !success {
+            fmt.println("Error: failed to write dose file")
+            return
+        }
+        fmt.println("Write success")
     }
-    fmt.println("Write success")
+
+    // Handle the displaying of the dose results
+    DISPLAY_RESULTS :: true
+    if !DISPLAY_RESULTS do return
+
+    // Get slice and convert to fraction of max dose
+    x_to_show := 500
+    x_slice := grid_x_slice_make(&voxels, x_to_show)
+    defer delete(x_slice)
+    low := slice.min(x_slice)
+    high := slice.max(x_slice)
+    for i in 0..<len(x_slice) {
+        x_slice[i] /= high // convert from raw dose to fraction of max dose
+    }
+
+    // Convert to color array for heatmap
+    color_slice := x_slice_to_color(x_slice)
+    defer delete(color_slice)
+    fmt.println(color_slice)
 }
