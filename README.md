@@ -18,3 +18,24 @@ I also calculate dose by assuming a total dose since I lack real data and experi
 The calculated dose is outputted to a `.raw` file, but I am still working on the display of cross sections.
 
 # How to Run
+This program is written in the Odin programming language, so you will need the odin compiler.
+I have been using `odin version dev-2026-06-nightly:7ab61e4`.
+Odin isn't completely stable yet, so it's possible that a significantly older or newer version wouldn't work.
+
+Once you have the compiler, simply run `odin build src/sim` in the project root directory.
+This will compile the program.
+To run the simulation, run `./sim`.
+Note that this (in the default state) will create a 4 GB file called `dose.raw` in that directory with the output of the simulation.
+
+This requires that you have XCOM data covering 1 keV photon energy up to your initial photon energy saved at `data/water_xcom.txt`.
+This XCOM data should include all possible columns from the dataset (useless ones are filtered out by the program), and they should look like the following.
+```
+1.000E-03 1.372E+00 1.319E-02 4.076E+03 0.000E+00 0.000E+00 4.077E+03 4.076E+03
+1.500E-03 1.269E+00 2.673E-02 1.374E+03 0.000E+00 0.000E+00 1.376E+03 1.374E+03
+2.000E-03 1.150E+00 4.184E-02 6.162E+02 0.000E+00 0.000E+00 6.173E+02 6.162E+02
+3.000E-03 9.087E-01 7.075E-02 1.919E+02 0.000E+00 0.000E+00 1.928E+02 1.919E+02
+...
+```
+So there should be no comments or headers.
+
+You can adjust certain parameters by modifying the `src/sim/setup.odin` file and recompiling.
