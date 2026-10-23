@@ -35,3 +35,29 @@ x_slice_to_color :: proc(x_slice: []f64) -> (heatmap: []raylib.Color) {
     }
     return
 }
+
+display_x_slice_img :: proc(x_slice_heatmap: []raylib.Color, voxel_count_per_dim: u32) {
+    raylib.InitWindow(800, 800, "MC Dose Heatmap")
+    defer raylib.CloseWindow()
+    raylib.SetTargetFPS(60)
+
+    dim := i32(voxel_count_per_dim)
+    empty_img := raylib.GenImageColor(dim, dim, raylib.BLACK)
+    texture := raylib.LoadTextureFromImage(empty_img)
+    raylib.UnloadImage(empty_img)
+    defer raylib.UnloadTexture(texture)
+
+    raylib.UpdateTexture(texture, raw_data(x_slice_heatmap))
+
+    for !raylib.WindowShouldClose() {
+        // Draw Frame
+        raylib.BeginDrawing()
+        raylib.ClearBackground(raylib.DARKGRAY)
+
+        // Stretch texture across 800x800 window smoothly
+        src_rect := raylib.Rectangle{0, 0, f32(texture.width), f32(texture.height)}
+        dest_rect := raylib.Rectangle{0,0,800,800}
+        raylib.DrawTexturePro(texture, src_rect, dest_rect, {0,0}, 0.0, raylib.WHITE)
+        raylib.EndDrawing()
+    }
+}

@@ -285,7 +285,8 @@ main :: proc() {
     if !DISPLAY_RESULTS do return
 
     // Get slice and convert to fraction of max dose
-    x_to_show := 500
+    //x_to_show := 500  // Halfway through the block
+    x_to_show := 0      // the surface of the beam
     x_slice := grid_x_slice_make(&voxels, x_to_show)
     defer delete(x_slice)
     low := slice.min(x_slice)
@@ -297,5 +298,6 @@ main :: proc() {
     // Convert to color array for heatmap
     color_slice := x_slice_to_color(x_slice)
     defer delete(color_slice)
-    fmt.println(color_slice)
+
+    display_x_slice_img(color_slice, setup.voxel_count_per_dim)
 }
